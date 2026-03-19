@@ -1,0 +1,200 @@
+================================================================
+NOKTA — PENJELASAN SECURITY & ENKRIPSI
+Sprint 2 — Encryption Core
+================================================================
+
+
+----------------------------------------------------------------
+APA ITU MASTER PASSWORD?
+----------------------------------------------------------------
+
+Master password adalah password KEDUA yang terpisah dari password login.
+
+  - Password login  → untuk masuk ke app (dikelola Supabase Auth)
+  - Master password → untuk membuka brankas (dikelola sendiri,
+                      tidak disimpan di mana pun)
+
+Kalau password login bocor, data vault tetap aman karena tanpa
+master password, data tidak bisa didekripsi. Bahkan developer
+sendiri tidak bisa baca isi vault user karena master password
+tidak pernah menyentuh server dalam bentuk aslinya.
+
+
+----------------------------------------------------------------
+ALUR LENGKAP
+----------------------------------------------------------------
+
+  Master Password (hanya ada di kepala user)
+          ↓
+    keyDerivation.ts
+          ↓
+    Encryption Key (Buffer 256-bit)
+          ↓
+    session.ts — simpan key di encrypted cookie
+          ↓
+    crypto.ts — pakai key untuk encrypt/decrypt data
+
+
+----------------------------------------------------------------
+FUNGSI MASING-MASING FILE
+----------------------------------------------------------------
+
+1. keyDerivation.ts
+-------------------
+Mengubah master password (string yang mudah diingat manusia)
+menjadi encryption key (256-bit bytes yang dimengerti komputer).
+Proses ini disebut KEY DERIVATION.
+
+Menggunakan PBKDF2 — algoritmanya sengaja dibuat lambat
+(100.000 iterasi) supaya kalau ada yang brute force master
+password, butuh waktu sangat lama per percobaan.
+
+  "password123" + salt → [100.000x hashing] → Buffer(32 bytes)
+
+SALT adalah random string yang disimpan di database.
+Fungsinya supaya dua user dengan master password yang sama
+tetap menghasilkan encryption key yang berbeda.
+
+
+2. crypto.ts
+------------
+Melakukan enkripsi dan dekripsi data menggunakan AES-256-GCM
+dengan encryption key dari keyDerivation.ts.
+
+  encrypt({ password: "rahasia" }, key)
+  → { ciphertext: "x9a...", iv: "abc...", authTag: "xyz..." }
+
+  decrypt({ ciphertext, iv, authTag }, key)
+  → { password: "rahasia" }
+
+Tiga komponen hasil enkripsi:
+
+  - ciphertext  → data yang sudah dienkripsi, disimpan di DB
+  - iv          → Initialization Vector, random bytes unik per
+                  enkripsi, disimpan di DB, tidak rahasia
+  - authTag     → tanda tangan integritas, membuktikan data
+                  tidak dimanipulasi, disimpan di DB
+
+GCM mode istimewa karena selain mengenkripsi, dia juga
+MEMVERIFIKASI INTEGRITAS — kalau ciphertext diubah sedikit
+saja, decrypt akan langsung gagal/throw error.
+
+
+3. session.ts
+-------------
+Menyimpan encryption key di ENCRYPTED COOKIE selama sesi aktif.
+Ini yang membuat user tidak perlu ketik master password setiap
+mau buka vault item.
+
+  Encryption key (dari keyDerivation)
+          ↓
+  Dienkripsi lagi dengan SESSION_SECRET (key milik server)
+          ↓
+  Disimpan sebagai cookie httpOnly
+          ↓
+  Setiap request → cookie dibaca → key di-decrypt → siap pakai
+
+Kenapa perlu dienkripsi lagi?
+Karena cookie bisa dibaca di browser kalau tidak di-protect.
+Dengan httpOnly + dienkripsi SESSION_SECRET, key tidak bisa
+diambil lewat JavaScript atau dibaca tanpa SESSION_SECRET
+milik server.
+
+Fungsi lockSession() tidak menghapus key, tapi menandai cookie
+dengan lockedAt — jadi key masih ada tapi tidak bisa dipakai
+sampai user ketik master password lagi.
+
+
+4. masterPassword.ts
+--------------------
+Server Actions yang menjadi jembatan antara UI dan ketiga
+file di atas:
+
+  - setupMasterPassword()
+    Dipanggil sekali saat onboarding. Generate salt, derive key,
+    simpan salt ke DB, simpan key ke session.
+
+  - unlockWithMasterPassword()
+    Dipanggil saat login atau setelah auto-lock. Ambil salt dari
+    DB, derive key lagi dari master password + salt yang sama,
+    simpan ke session.
+
+  - lock()
+    Tandai session sebagai locked, redirect ke halaman unlock.
+
+  - clearMasterPasswordSession()
+    Hapus session saat logout.
+
+
+----------------------------------------------------------------
+APA YANG DISIMPAN DI DATABASE vs TIDAK
+----------------------------------------------------------------
+
+  Data                  | Disimpan di DB?
+  ----------------------|----------------------------------
+  Master password       | TIDAK — tidak pernah
+  Encryption key        | TIDAK — tidak pernah
+  Salt                  | YA    — tidak rahasia
+  IV + authTag          | YA    — tidak rahasia
+  Ciphertext            | YA    — tidak berguna tanpa key
+
+Kalau database bocor, attacker hanya dapat ciphertext + salt
++ IV. Tanpa master password, data tetap tidak bisa dibaca.
+
+
+----------------------------------------------------------------
+KENAPA AES-256-GCM?
+----------------------------------------------------------------
+
+AES-256     → standar enkripsi terkuat yang digunakan militer,
+              bank, dan semua layanan besar di dunia.
+256         → panjang key 256-bit. Secara teori butuh 2^256
+              percobaan untuk brute force — tidak mungkin.
+GCM         → mode operasi yang menambahkan authentication.
+              Bukan hanya mengenkripsi, tapi juga menjamin
+              data tidak dimanipulasi (authenticated encryption).
+
+
+----------------------------------------------------------------
+KENAPA PBKDF2 DAN BUKAN BCRYPT/ARGON2?
+----------------------------------------------------------------
+
+Semua ketiganya aman untuk key derivation. PBKDF2 dipilih
+karena:
+  - Built-in di Node.js crypto (tanpa library tambahan)
+  - Sudah cukup dengan 100.000 iterasi untuk use case ini
+  - Argon2id lebih baik secara teori tapi butuh library tambahan
+
+Untuk v2.0, bisa diupgrade ke Argon2id dengan migrasi salt.
+
+
+----------------------------------------------------------------
+GLOSSARY
+----------------------------------------------------------------
+
+  AES-256-GCM   Advanced Encryption Standard, 256-bit key,
+                Galois/Counter Mode
+
+  PBKDF2        Password-Based Key Derivation Function 2
+
+  Salt          Random string unik per couple, disimpan di DB,
+                dipakai untuk membuat key derivation unik
+
+  IV            Initialization Vector — random bytes unik per
+                enkripsi, memastikan enkripsi data yang sama
+                menghasilkan ciphertext yang berbeda
+
+  authTag       Authentication tag dari GCM — membuktikan
+                integritas data
+
+  Ciphertext    Data terenkripsi yang disimpan di database
+
+  httpOnly      Atribut cookie yang mencegah JavaScript
+                membaca nilai cookie
+
+  SESSION_SECRET  Key rahasia milik server untuk mengenkripsi
+                  session cookie
+
+================================================================
+Nokta v1.1 — Internal Documentation
+================================================================

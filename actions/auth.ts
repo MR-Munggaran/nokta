@@ -18,6 +18,19 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+type SessionOk = {
+  ok:       true;
+  userId:   string;
+  coupleId: string;
+  name:     string;
+  role:     string | null;
+};
+
+type SessionError = {
+  ok:    false;
+  error: string;
+};
+
 // ─── REGISTER ─────────────────────────────────────────────────────────────────
 
 export async function register(input: unknown) {
@@ -30,12 +43,18 @@ export async function register(input: unknown) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error || !data.user) return { success: false, error: error?.message ?? "Registrasi gagal." };
 
-  // Insert user profile ke tabel users
-  await db.insert(users).values({
-    id:    data.user.id,
-    email,
-    name,
+  // Cek apakah profile sudah ada (percobaan register sebelumnya)
+  const existing = await db.query.users.findFirst({
+    where: eq(users.id, data.user.id),
   });
+
+  if (!existing) {
+    await db.insert(users).values({
+      id:    data.user.id,
+      email,
+      name,
+    });
+  }
 
   redirect("/onboarding");
 }
@@ -52,7 +71,6 @@ export async function login(input: unknown) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { success: false, error: "Email atau password salah." };
 
-  // Cek apakah user sudah punya couple
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Login gagal." };
 
@@ -60,7 +78,23 @@ export async function login(input: unknown) {
     where: eq(users.id, user.id),
   });
 
+  // Belum punya couple → onboarding
   if (!profile?.coupleId) {
+    redirect("/onboarding");
+  }
+
+  // Punya couple, cek apakah master password sudah di-setup
+  const couple = await db.query.couples.findFirst({
+    where:   eq(couples.id, profile.coupleId),
+    columns: { masterPasswordSalt: true },
+  });
+
+  const hasSetupMasterPassword =
+    couple?.masterPasswordSalt &&
+    couple.masterPasswordSalt !== "pending" &&
+    couple.masterPasswordSalt.length > 10;
+
+  if (!hasSetupMasterPassword) {
     redirect("/onboarding");
   }
 
@@ -77,7 +111,7 @@ export async function logout() {
 
 // ─── GET SESSION ──────────────────────────────────────────────────────────────
 
-export async function getSession() {
+export async function getSession(): Promise<SessionOk | SessionError> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, error: "Unauthorized" };
@@ -86,13 +120,13 @@ export async function getSession() {
     where: eq(users.id, user.id),
   });
 
-  if (!profile) return { ok: false as const, error: "User tidak ditemukan." };
+  if (!profile)          return { ok: false as const, error: "User tidak ditemukan." };
   if (!profile.coupleId) return { ok: false as const, error: "Belum bergabung ke couple." };
 
   return {
     ok:       true as const,
     userId:   profile.id,
-    coupleId: profile.coupleId,
+    coupleId: profile.coupleId!,
     name:     profile.name,
     role:     profile.role,
   };

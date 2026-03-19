@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/auth"];
+const GUEST_ONLY_ROUTES     = ["/login", "/register"];
+const ALWAYS_ALLOWED_ROUTES = ["/login", "/register", "/auth", "/onboarding"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
@@ -29,16 +30,16 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
-  const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
   const isRoot = pathname === "/";
 
   if (!user) {
-    if (isPublicRoute || isRoot) return response;
+    const isAllowed = ALWAYS_ALLOWED_ROUTES.some((r) => pathname.startsWith(r));
+    if (isAllowed || isRoot) return response;
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (isPublicRoute && user) {
+  // Sudah login → blokir akses ke login/register
+  if (GUEST_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
