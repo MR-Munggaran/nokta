@@ -14,7 +14,7 @@ export default async function VaultPage() {
           <Lock className="w-9 h-9 text-stone-400" />
         </div>
         <h2 className="font-semibold text-xl text-stone-700 mb-1">Vault Terkunci</h2>
-        <p className="text-sm text-stone-400 max-w-[220px] leading-relaxed">
+        <p className="text-sm text-stone-400 max-w-55 leading-relaxed">
           Masukkan master password untuk mengakses vault kamu.
         </p>
         {/* UnlockForm akan ditambah di Sprint 6 */}

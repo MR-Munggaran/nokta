@@ -35,14 +35,14 @@ export default async function MorePage() {
             href={href}
             className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-stone-100 hover:bg-stone-50 transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center shrink-0">
               <Icon className="w-5 h-5 text-stone-500" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-stone-800">{label}</p>
               <p className="text-xs text-stone-400 mt-0.5">{desc}</p>
             </div>
-            <ChevronRight className="w-4 h-4 text-stone-300 flex-shrink-0" />
+            <ChevronRight className="w-4 h-4 text-stone-300 shrink-0" />
           </Link>
         ))}
       </div>
@@ -55,7 +55,7 @@ export default async function MorePage() {
             type="submit"
             className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-amber-100 hover:bg-amber-50 transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
               <Lock className="w-5 h-5 text-amber-500" />
             </div>
             <div className="flex-1 text-left">
@@ -71,7 +71,7 @@ export default async function MorePage() {
             type="submit"
             className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl border border-red-100 hover:bg-red-50 transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
               <LogOut className="w-5 h-5 text-red-400" />
             </div>
             <div className="flex-1 text-left">

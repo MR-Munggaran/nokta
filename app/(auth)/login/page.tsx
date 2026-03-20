@@ -39,7 +39,7 @@ export default function LoginPage() {
       />
 
       {/* Glow */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-10 pointer-events-none blur-[120px]"
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 rounded-full opacity-10 pointer-events-none blur-[120px]"
         style={{ background: "radial-gradient(ellipse, #6366f1 0%, transparent 70%)" }}
       />
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 placeholder="kamu@email.com"
                 required
                 autoComplete="email"
-                className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all border border-white/[0.08] focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-white/20 outline-none transition-all border border-white/8 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20"
                 style={{ background: "rgba(255,255,255,0.05)" }}
               />
             </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-white/20 outline-none transition-all border border-white/[0.08] focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-white/20 outline-none transition-all border border-white/8 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20"
                   style={{ background: "rgba(255,255,255,0.05)" }}
                 />
                 <button

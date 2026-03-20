@@ -45,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AutoLockProvider>
       <div className="min-h-dvh bg-[#F7F6F3]">
-        <main className="max-w-md mx-auto px-4 pt-6 pb-[calc(72px+1.5rem)]">
+        <main className="max-w-md mx-auto px-4 pt-6 pb-24">
           {children}
         </main>
         <BottomNav />

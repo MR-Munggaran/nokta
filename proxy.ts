@@ -29,16 +29,18 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const isRoot = pathname === "/";
+  // Pakai getSession() — baca dari cookie, tidak ada network call
+  // getUser() lebih aman tapi lambat karena hit Supabase server setiap request
+  const { data: { session } } = await supabase.auth.getSession();
+  const isLoggedIn = !!session?.user;
+  const isRoot     = pathname === "/";
 
-  if (!user) {
+  if (!isLoggedIn) {
     const isAllowed = ALWAYS_ALLOWED_ROUTES.some((r) => pathname.startsWith(r));
     if (isAllowed || isRoot) return response;
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Sudah login → blokir akses ke login/register
   if (GUEST_ONLY_ROUTES.some((r) => pathname.startsWith(r))) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

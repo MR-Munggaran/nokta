@@ -52,7 +52,7 @@ export default async function BucketListPage() {
             <ListChecks className="w-9 h-9 text-amber-400" />
           </div>
           <h2 className="font-semibold text-lg text-stone-700 mb-1">Bucket list masih kosong</h2>
-          <p className="text-sm text-stone-400 max-w-[220px] leading-relaxed">
+          <p className="text-sm text-stone-400 max-w-55 leading-relaxed">
             Tambahkan hal-hal yang ingin kalian lakukan bersama
           </p>
         </div>

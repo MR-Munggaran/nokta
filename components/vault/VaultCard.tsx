@@ -6,7 +6,7 @@ import { deleteVaultItem, toggleVaultItemShared } from "@/actions/vault";
 import { toast } from "sonner";
 import {
   KeyRound, FileText, StickyNote, Eye, EyeOff,
-  Copy, Check, Trash2, Users, Lock, ChevronDown, ChevronUp,
+  Copy, Check, Trash2, Users, Lock, ChevronDown, ChevronUp, AlertTriangle,
 } from "lucide-react";
 import type { DecryptedVaultItem } from "@/actions/vault";
 import type { CredentialData, DocumentData, NoteData } from "@/lib/validations";
@@ -129,12 +129,40 @@ export function VaultCard({ item }: { item: DecryptedVaultItem }) {
               <div className="space-y-2">
                 <FieldRow label="Nomor"    value={d.number} fieldKey="number" copied={copied} onCopy={copyToClipboard} />
                 <FieldRow label="Penerbit" value={d.issuer} fieldKey="issuer" copied={copied} onCopy={copyToClipboard} />
-                {d.expiry && (
-                  <div className="bg-stone-50 rounded-xl px-3 py-2.5">
-                    <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Berlaku sampai</p>
-                    <p className="text-sm text-stone-700">{d.expiry}</p>
-                  </div>
-                )}
+                {d.expiry && (() => {
+                  // Cek apakah expiry dalam 30 hari
+                  // Format expiry bisa MM/YYYY atau YYYY-MM-DD
+                  let isExpiringSoon = false;
+                  let isExpired = false;
+                  try {
+                    const parts = d.expiry.includes("/")
+                      ? d.expiry.split("/").reverse().join("-") + "-01" // MM/YYYY → YYYY-MM-01
+                      : d.expiry;
+                    const expiryDate = new Date(parts);
+                    const now = new Date();
+                    const diff = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                    isExpiringSoon = diff <= 30 && diff > 0;
+                    isExpired = diff <= 0;
+                  } catch { /* ignore parse errors */ }
+
+                  return (
+                    <div className={`rounded-xl px-3 py-2.5 ${
+                      isExpired ? "bg-red-50" : isExpiringSoon ? "bg-amber-50" : "bg-stone-50"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-0.5">Berlaku sampai</p>
+                        {(isExpiringSoon || isExpired) && (
+                          <AlertTriangle className={`w-3.5 h-3.5 ${isExpired ? "text-red-400" : "text-amber-400"}`} />
+                        )}
+                      </div>
+                      <p className={`text-sm font-medium ${
+                        isExpired ? "text-red-500" : isExpiringSoon ? "text-amber-600" : "text-stone-700"
+                      }`}>{d.expiry}</p>
+                      {isExpired && <p className="text-[10px] text-red-400 mt-0.5 font-medium">Sudah kadaluarsa!</p>}
+                      {isExpiringSoon && <p className="text-[10px] text-amber-500 mt-0.5 font-medium">Akan kadaluarsa dalam 30 hari</p>}
+                    </div>
+                  );
+                })()}
                 {d.notes && <p className="text-xs text-stone-400 px-1">{d.notes}</p>}
               </div>
             );
