@@ -6,7 +6,6 @@ import { Lock } from "lucide-react";
 export default async function VaultPage() {
   const result = await getVaultItems();
 
-  // Vault terkunci — key tidak ada di session
   if (!result.success && result.error.includes("terkunci")) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -14,10 +13,9 @@ export default async function VaultPage() {
           <Lock className="w-9 h-9 text-stone-400" />
         </div>
         <h2 className="font-semibold text-xl text-stone-700 mb-1">Vault Terkunci</h2>
-        <p className="text-sm text-stone-400 max-w-55 leading-relaxed">
+        <p className="text-sm text-stone-400 max-w-[220px] leading-relaxed">
           Masukkan master password untuk mengakses vault kamu.
         </p>
-        {/* UnlockForm akan ditambah di Sprint 6 */}
       </div>
     );
   }
@@ -26,9 +24,13 @@ export default async function VaultPage() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-800">Vault</h1>
-        <p className="text-sm text-stone-400 mt-1">{items.length} item tersimpan</p>
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-800">Vault</h1>
+          <p className="text-sm text-stone-400 mt-1">{items.length} item tersimpan</p>
+        </div>
+        <VaultForm desktopTrigger />
       </div>
 
       <VaultList items={items} />
