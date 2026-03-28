@@ -97,7 +97,7 @@ function LockWarningBanner({
   }, []);
 
   return (
-    <div className="fixed bottom-21 left-4 right-4 z-50 max-w-md mx-auto">
+    <div className="fixed bottom-6 md:bottom-6 left-4 right-4 z-50 max-w-md mx-auto">
       <div className="bg-stone-900 text-white rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-xl">
         <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
           <span className="text-amber-400 text-sm font-bold">{seconds}</span>

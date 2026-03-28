@@ -8,6 +8,20 @@
       "when": 1773892450592,
       "tag": "0000_public_plazm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774674414707,
+      "tag": "0001_empty_ikaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774675101710,
+      "tag": "0002_young_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "moments" ALTER COLUMN "couple_id" SET DATA TYPE uuid;

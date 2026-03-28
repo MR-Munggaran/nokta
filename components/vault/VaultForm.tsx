@@ -15,11 +15,15 @@ const TYPE_OPTIONS: { key: VaultType; label: string; icon: typeof KeyRound; desc
   { key: "note",       label: "Catatan", icon: StickyNote, desc: "Catatan pribadi" },
 ];
 
-export function VaultForm() {
+interface Props {
+  desktopTrigger?: boolean;
+}
+
+export function VaultForm({ desktopTrigger = false }: Props) {
   const router = useRouter();
-  const [open, setOpen]           = useState(false);
-  const [type, setType]           = useState<VaultType | null>(null);
-  const [loading, setLoading]     = useState(false);
+  const [open, setOpen]                 = useState(false);
+  const [type, setType]                 = useState<VaultType | null>(null);
+  const [loading, setLoading]           = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleClose = () => { setOpen(false); setType(null); };
@@ -30,14 +34,11 @@ export function VaultForm() {
     setLoading(true);
 
     const fd = new FormData(e.currentTarget);
-
     let input: CreateVaultItemInput;
 
     if (type === "credential") {
       input = {
-        type,
-        name:   fd.get("name") as string,
-        shared: fd.get("shared") === "on",
+        type, name: fd.get("name") as string, shared: fd.get("shared") === "on",
         data: {
           username: fd.get("username") as string,
           password: fd.get("password") as string,
@@ -47,9 +48,7 @@ export function VaultForm() {
       };
     } else if (type === "document") {
       input = {
-        type,
-        name:   fd.get("name") as string,
-        shared: fd.get("shared") === "on",
+        type, name: fd.get("name") as string, shared: fd.get("shared") === "on",
         data: {
           number: fd.get("number") as string,
           issuer: fd.get("issuer") as string,
@@ -59,9 +58,7 @@ export function VaultForm() {
       };
     } else {
       input = {
-        type,
-        name:   fd.get("name") as string,
-        shared: fd.get("shared") === "on",
+        type, name: fd.get("name") as string, shared: fd.get("shared") === "on",
         data: { content: fd.get("content") as string },
       };
     }
@@ -79,34 +76,82 @@ export function VaultForm() {
     }
   };
 
-  if (!open) {
+  if (desktopTrigger) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-[calc(var(--bottom-nav-h,72px)+20px)] right-5 z-40 w-14 h-14 rounded-full bg-stone-800 text-white flex items-center justify-center shadow-lg hover:bg-stone-700 active:scale-90 transition-all"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Tambah
+        </button>
+        {open && (
+          <VaultFormModal
+            type={type}
+            setType={setType}
+            loading={loading}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            onClose={handleClose}
+            onSubmit={handleSubmit}
+          />
+        )}
+      </>
     );
   }
 
   return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="md:hidden fixed bottom-23 right-5 z-40 w-14 h-14 rounded-full bg-stone-800 text-white flex items-center justify-center shadow-lg hover:bg-stone-700 active:scale-90 transition-all"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+      {open && (
+        <VaultFormModal
+          type={type}
+          setType={setType}
+          loading={loading}
+          showPassword={showPassword}
+          setShowPassword={setShowPassword}
+          onClose={handleClose}
+          onSubmit={handleSubmit}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+
+function VaultFormModal({
+  type, setType, loading, showPassword, setShowPassword, onClose, onSubmit,
+}: {
+  type:             VaultType | null;
+  setType:          (t: VaultType | null) => void;
+  loading:          boolean;
+  showPassword:     boolean;
+  setShowPassword:  (v: boolean) => void;
+  onClose:          () => void;
+  onSubmit:         (e: React.FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center pb-[88px] sm:items-center sm:p-4">
-      <div className="absolute inset-0 -z-10" onClick={handleClose} />
+      <div className="absolute inset-0 -z-10" onClick={onClose} />
       <div className="w-[calc(100%-2rem)] max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[85dvh] flex flex-col">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
           <h2 className="font-bold text-stone-800">
             {type ? `Tambah ${TYPE_OPTIONS.find((t) => t.key === type)?.label}` : "Pilih Tipe"}
           </h2>
-          <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 text-stone-500">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100 text-stone-500">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Type Selection */}
           {!type ? (
             <div className="p-5 space-y-2">
               {TYPE_OPTIONS.map(({ key, label, icon: Icon, desc }) => (
@@ -126,12 +171,9 @@ export function VaultForm() {
               ))}
             </div>
           ) : (
-            /* Form */
-            <form id="vault-form" onSubmit={handleSubmit} className="p-5 space-y-4">
-              {/* Name */}
+            <form id="vault-form" onSubmit={onSubmit} className="p-5 space-y-4">
               <Field label="Nama / Label" name="name" placeholder="Contoh: Gmail, KTP, Wifi Rumah" required />
 
-              {/* Credential Fields */}
               {type === "credential" && (
                 <>
                   <Field label="Username / Email" name="username" placeholder="contoh@email.com" required />
@@ -145,7 +187,7 @@ export function VaultForm() {
                         required
                         className="w-full bg-stone-50 rounded-xl px-4 py-3 pr-10 text-sm text-stone-700 border border-stone-100 outline-none focus:ring-2 focus:ring-stone-200"
                       />
-                      <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400">
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400">
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
@@ -155,7 +197,6 @@ export function VaultForm() {
                 </>
               )}
 
-              {/* Document Fields */}
               {type === "document" && (
                 <>
                   <Field label="Nomor" name="number" placeholder="1234 5678 9012" required />
@@ -165,12 +206,10 @@ export function VaultForm() {
                 </>
               )}
 
-              {/* Note Fields */}
               {type === "note" && (
                 <Field label="Isi catatan" name="content" placeholder="Tulis catatan rahasia kamu..." textarea required />
               )}
 
-              {/* Shared toggle */}
               <label className="flex items-center gap-3 py-2 cursor-pointer">
                 <input name="shared" type="checkbox" className="w-4 h-4 rounded accent-stone-800" />
                 <span className="text-sm text-stone-600">Bagikan ke pasangan</span>
@@ -179,7 +218,6 @@ export function VaultForm() {
           )}
         </div>
 
-        {/* Footer */}
         {type && (
           <div className="p-5 border-t border-stone-50">
             <div className="flex gap-3">
@@ -190,9 +228,12 @@ export function VaultForm() {
                 type="submit"
                 form="vault-form"
                 disabled={loading}
-                className="flex-[2] py-3.5 bg-stone-800 text-white rounded-2xl text-sm font-bold disabled:opacity-50 flex items-center justify-center"
+                className="flex-2 py-3.5 bg-stone-800 text-white rounded-2xl text-sm font-bold disabled:opacity-50 flex items-center justify-center"
               >
-                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Simpan"}
+                {loading
+                  ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : "Simpan"
+                }
               </button>
             </div>
           </div>

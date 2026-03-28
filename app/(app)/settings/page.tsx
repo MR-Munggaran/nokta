@@ -190,7 +190,7 @@ export default function SettingsPage() {
       {/* App info */}
       <div className="text-center py-4 space-y-1">
         <p className="text-sm font-bold text-stone-400">● Nokta</p>
-        <p className="text-xs text-stone-300">v1.0.0 · Satu titik untuk semua yang penting.</p>
+        <p className="text-xs text-stone-300">v1.1.0 · Satu titik untuk semua yang penting.</p>
       </div>
     </div>
   );

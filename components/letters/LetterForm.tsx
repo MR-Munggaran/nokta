@@ -4,9 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createLetter } from "@/actions/letters";
 import { toast } from "sonner";
-import { Pencil, X } from "lucide-react";
+import { Pencil, X, Plus } from "lucide-react";
 
-export function LetterForm() {
+interface Props {
+  desktopTrigger?: boolean;
+}
+
+export function LetterForm({ desktopTrigger = false }: Props) {
   const router = useRouter();
   const [open, setOpen]       = useState(false);
   const [loading, setLoading] = useState(false);
@@ -17,7 +21,6 @@ export function LetterForm() {
     e.preventDefault();
     setLoading(true);
     const fd = new FormData(e.currentTarget);
-
     try {
       const result = await createLetter({
         title:   fd.get("title") as string,
@@ -34,36 +37,58 @@ export function LetterForm() {
     }
   };
 
-  if (!open) {
+  if (desktopTrigger) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-[calc(72px+20px)] right-5 z-40 w-14 h-14 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all"
-      >
-        <Pencil className="w-5 h-5" />
-      </button>
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Tulis Surat
+        </button>
+        {open && <LetterFormModal onClose={handleClose} onSubmit={handleSubmit} loading={loading} />}
+      </>
     );
   }
 
   return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="md:hidden fixed bottom-[calc(72px+20px)] right-5 z-40 w-14 h-14 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg active:scale-90 transition-all"
+      >
+        <Pencil className="w-5 h-5" />
+      </button>
+      {open && <LetterFormModal onClose={handleClose} onSubmit={handleSubmit} loading={loading} />}
+    </>
+  );
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+
+function LetterFormModal({
+  onClose, onSubmit, loading,
+}: {
+  onClose:  () => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  loading:  boolean;
+}) {
+  return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center pb-[88px] sm:items-center sm:p-4">
-      <div className="absolute inset-0 -z-10" onClick={handleClose} />
+      <div className="absolute inset-0 -z-10" onClick={onClose} />
       <div className="w-[calc(100%-2rem)] max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden max-h-[85dvh] flex flex-col">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100 flex-shrink-0">
           <h2 className="font-bold text-stone-800">Tulis Surat</h2>
-          <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-stone-100">
             <X className="w-4 h-4 text-stone-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
-          {/* Title */}
+        <form onSubmit={onSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
-              Judul
-            </label>
+            <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">Judul</label>
             <input
               name="title"
               type="text"
@@ -73,11 +98,8 @@ export function LetterForm() {
             />
           </div>
 
-          {/* Content */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
-              Isi Surat
-            </label>
+            <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">Isi Surat</label>
             <textarea
               name="content"
               rows={8}
@@ -87,13 +109,8 @@ export function LetterForm() {
             />
           </div>
 
-          {/* Submit */}
           <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="flex-1 py-3.5 bg-stone-100 text-stone-500 rounded-2xl text-sm font-bold"
-            >
+            <button type="button" onClick={onClose} className="flex-1 py-3.5 bg-stone-100 text-stone-500 rounded-2xl text-sm font-bold">
               Batal
             </button>
             <button

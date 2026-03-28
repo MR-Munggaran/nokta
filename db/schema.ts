@@ -107,6 +107,24 @@ export const moodCheckins = pgTable("mood_checkins", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const moments = pgTable("moments", {
+  id:         serial("id").primaryKey(),
+  coupleId:   uuid("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }), 
+  uploaderId: uuid("uploader_id").notNull().references(() => users.id),
+  imageUrl:   text("image_url").notNull(),
+  caption:    text("caption"),
+  date:       timestamp("date", { withTimezone: true }).defaultNow().notNull(),
+  createdAt:  timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const momentImages = pgTable("moment_images", {
+  id:        serial("id").primaryKey(),
+  momentId:  integer("moment_id").notNull().references(() => moments.id, { onDelete: "cascade" }),
+  imageUrl:  text("image_url").notNull(),
+  order:     integer("order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // ─── COUPLE NOTES / LETTERS ───────────────────────────────────────────────────
 
 export const coupleNotes = pgTable("couple_notes", {
@@ -169,4 +187,13 @@ export const moodCheckinsRelations = relations(moodCheckins, ({ one }) => ({
 export const coupleNotesRelations = relations(coupleNotes, ({ one }) => ({
   couple: one(couples, { fields: [coupleNotes.coupleId], references: [couples.id] }),
   author: one(users,   { fields: [coupleNotes.authorId], references: [users.id] }),
+}));
+
+export const momentsRelations = relations(moments, ({ one, many }) => ({
+  uploader: one(users, { fields: [moments.uploaderId], references: [users.id] }),
+  images:   many(momentImages),
+}));
+
+export const momentImagesRelations = relations(momentImages, ({ one }) => ({
+  moment: one(moments, { fields: [momentImages.momentId], references: [moments.id] }),
 }));

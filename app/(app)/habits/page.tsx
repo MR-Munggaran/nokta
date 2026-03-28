@@ -14,35 +14,36 @@ export default async function HabitsPage() {
 
   if (!session.ok) return null;
 
-  const partner = coupleInfo?.members.find((m) => m.id !== session.userId);
-
-  // Hitung berapa habit sudah selesai hari ini
-  const today        = new Date().toISOString().split("T")[0];
-  const doneToday    = habits.filter((h) =>
+  const partner   = coupleInfo?.members.find((m) => m.id !== session.userId);
+  const today     = new Date().toISOString().split("T")[0];
+  const doneToday = habits.filter((h) =>
     h.logs.some((l) => l.userId === session.userId && l.date === today)
   ).length;
 
   return (
     <>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-800">Habit Tracker</h1>
-        <p className="text-sm text-stone-400 mt-1">
-          {doneToday} dari {habits.length} selesai hari ini
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-800">Habit Tracker</h1>
+          <p className="text-sm text-stone-400 mt-1">
+            {doneToday} dari {habits.length} selesai hari ini
+          </p>
+        </div>
+        <HabitForm desktopTrigger />
       </div>
 
-      {/* Progress hari ini */}
+      {/* Progress */}
       {habits.length > 0 && (
         <div className="mb-6">
           <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-              style={{ width: `${habits.length ? (doneToday / habits.length) * 100 : 0}%` }}
+              style={{ width: `${(doneToday / habits.length) * 100}%` }}
             />
           </div>
           <p className="text-xs text-stone-400 mt-1.5 text-right">
-            {Math.round(habits.length ? (doneToday / habits.length) * 100 : 0)}% hari ini
+            {Math.round((doneToday / habits.length) * 100)}% hari ini
           </p>
         </div>
       )}
@@ -59,7 +60,8 @@ export default async function HabitsPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        /* Desktop: 2 kolom, mobile: 1 kolom */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {habits.map((habit) => (
             <HabitCard
               key={habit.id}

@@ -7,7 +7,6 @@ import { CalendarHeart } from "lucide-react";
 export default async function DatesPage() {
   const dates = await getSpecialDates();
 
-  // Sort by days until (ascending) — yang paling dekat di atas
   const sorted = [...dates].sort((a, b) => {
     const dA = getDaysUntil(a.date, a.recurringYearly);
     const dB = getDaysUntil(b.date, b.recurringYearly);
@@ -20,11 +19,15 @@ export default async function DatesPage() {
   return (
     <>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-800">Tanggal Spesial</h1>
-        <p className="text-sm text-stone-400 mt-1">
-          {dates.length} momen tersimpan
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-800">Tanggal Spesial</h1>
+          <p className="text-sm text-stone-400 mt-1">
+            {dates.length} momen tersimpan
+          </p>
+        </div>
+        {/* Tombol tambah — desktop (mobile pakai FAB) */}
+        <DateForm desktopTrigger />
       </div>
 
       {dates.length === 0 ? (
@@ -39,30 +42,33 @@ export default async function DatesPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Nearest — featured */}
           {nearest && (
             <div className="space-y-2">
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
                 Paling Dekat
               </p>
-              <CountdownCard item={nearest} />
+              {/* Featured — full width di semua ukuran */}
+              <CountdownCard item={nearest} featured />
             </div>
           )}
 
-          {/* Rest */}
           {rest.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
                 Berikutnya
               </p>
-              {rest.map((item) => (
-                <CountdownCard key={item.id} item={item} />
-              ))}
+              {/* Desktop: 2 kolom, mobile: 1 kolom */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {rest.map((item) => (
+                  <CountdownCard key={item.id} item={item} />
+                ))}
+              </div>
             </div>
           )}
         </div>
       )}
 
+      {/* FAB — mobile only */}
       <DateForm />
     </>
   );

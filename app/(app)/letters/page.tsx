@@ -18,11 +18,12 @@ export default async function LettersPage() {
   return (
     <>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-stone-800">Surat & Catatan</h1>
-        <p className="text-sm text-stone-400 mt-1">
-          {letters.length} surat tersimpan
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-800">Surat & Catatan</h1>
+          <p className="text-sm text-stone-400 mt-1">{letters.length} surat tersimpan</p>
+        </div>
+        <LetterForm desktopTrigger />
       </div>
 
       {/* Empty state */}
@@ -37,19 +38,15 @@ export default async function LettersPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Surat dari pasangan */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-start">
+          {/* Dari pasangan */}
           {partnerLetters.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
                 Dari Pasangan — {partnerLetters.length}
               </p>
               {partnerLetters.map((letter) => (
-                <LetterCard
-                  key={letter.id}
-                  letter={letter}
-                  currentUserId={session.userId}
-                />
+                <LetterCard key={letter.id} letter={letter} currentUserId={session.userId} />
               ))}
             </div>
           )}
@@ -61,11 +58,7 @@ export default async function LettersPage() {
                 Suratku — {myLetters.length}
               </p>
               {myLetters.map((letter) => (
-                <LetterCard
-                  key={letter.id}
-                  letter={letter}
-                  currentUserId={session.userId}
-                />
+                <LetterCard key={letter.id} letter={letter} currentUserId={session.userId} />
               ))}
             </div>
           )}

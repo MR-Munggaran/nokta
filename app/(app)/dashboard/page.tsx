@@ -6,11 +6,11 @@ import { getHabits } from "@/actions/habits";
 import { getTodayMoods } from "@/actions/mood";
 import { getBucketList } from "@/actions/bucketList";
 import { getDaysUntil } from "@/lib/dateUtils";
-import { Shield, ListChecks, Activity, BookHeart, ArrowRight, Flame } from "lucide-react";
+import { Shield, ListChecks, Activity, BookHeart, ArrowRight, Flame, Camera } from "lucide-react";
 import { CountdownWidget } from "@/components/dates/CountdownWidget";
 import Link from "next/link";
 
-// ─── WIDGET COMPONENTS (async) ────────────────────────────────────────────────
+// ─── WIDGET COMPONENTS ────────────────────────────────────────────────────────
 
 async function CountdownSection() {
   const dates = await getSpecialDates();
@@ -80,7 +80,7 @@ async function HabitSection({ userId }: { userId: string }) {
   ).length;
 
   return (
-    <Link href="/habits" className="bg-white rounded-2xl border border-stone-100 p-4 hover:bg-stone-50 transition-colors active:scale-[0.97] block">
+    <Link href="/habits" className="bg-white rounded-2xl border border-stone-100 p-4 hover:bg-stone-50 transition-colors active:scale-[0.97] block h-full">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-500" />
@@ -99,14 +99,14 @@ async function HabitSection({ userId }: { userId: string }) {
             />
           </div>
           <div className="flex gap-2 mt-2.5 flex-wrap">
-            {habits.slice(0, 6).map((h) => {
+            {habits.slice(0, 8).map((h) => {
               const isDone = h.logs.some((l) => l.userId === userId && l.date === today);
               return (
                 <div key={h.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
                   isDone ? "bg-emerald-50 text-emerald-600" : "bg-stone-50 text-stone-400"
                 }`}>
                   <span>{h.emoji}</span>
-                  <span className="font-medium truncate max-w-[60px]">{h.title}</span>
+                  <span className="font-medium truncate max-w-[80px]">{h.title}</span>
                   {isDone && <Flame className="w-3 h-3 text-orange-400 flex-shrink-0" />}
                 </div>
               );
@@ -124,7 +124,7 @@ async function BucketSection() {
   const completed = items.filter((i) => i.completed).length;
 
   return (
-    <Link href="/bucket-list" className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-col gap-2 hover:bg-stone-50 transition-colors active:scale-[0.97]">
+    <Link href="/bucket-list" className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-col gap-2 hover:bg-stone-50 transition-colors active:scale-[0.97] h-full">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">Bucket List</span>
         <ListChecks className="w-4 h-4 text-amber-400" />
@@ -146,8 +146,6 @@ async function BucketSection() {
   );
 }
 
-// ─── SKELETON ─────────────────────────────────────────────────────────────────
-
 function WidgetSkeleton({ className = "" }: { className?: string }) {
   return (
     <div className={`bg-white rounded-2xl border border-stone-100 p-4 animate-pulse ${className}`}>
@@ -161,7 +159,6 @@ function WidgetSkeleton({ className = "" }: { className?: string }) {
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  // Hanya fetch session + couple info di level page — cepat
   const [session, coupleInfo] = await Promise.all([
     getSession(),
     getCoupleInfo(),
@@ -180,19 +177,35 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-5">
+
       {/* Header */}
-      <div className="pt-2">
-        <p className="text-sm text-stone-400">{greeting},</p>
-        <h1 className="text-2xl font-bold text-stone-800 mt-0.5">{name} 👋</h1>
-        {partner && (
-          <p className="text-xs text-stone-400 mt-1">
-            Bersama <span className="font-medium text-stone-500">{partner.name.split(" ")[0]}</span>
-          </p>
-        )}
+      <div className="pt-2 flex items-start justify-between">
+        <div>
+          <p className="text-sm text-stone-400">{greeting},</p>
+          <h1 className="text-2xl font-bold text-stone-800 mt-0.5">{name} 👋</h1>
+          {partner && (
+            <p className="text-xs text-stone-400 mt-1">
+              Bersama <span className="font-medium text-stone-500">{partner.name.split(" ")[0]}</span>
+            </p>
+          )}
+        </div>
+        {/* Quick action — desktop */}
+        <Link
+          href="/moments"
+          className="hidden md:flex items-center gap-2 px-4 py-2 bg-rose-400 hover:bg-rose-500 text-white rounded-xl text-sm font-medium transition-colors"
+        >
+          <Camera className="w-4 h-4" />
+          Tambah Momen
+        </Link>
       </div>
 
-      {/* Row 1 — Countdown + Mood (load parallel, non-blocking) */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 
+        MOBILE:  2 kolom kecil (countdown + mood) → habits full → bucket+vault
+        DESKTOP: 3 kolom sejajar untuk row 1, lalu 2 kolom besar untuk row 2
+      */}
+
+      {/* Row 1 — Countdown + Mood + Habits (desktop: 3 col) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Suspense fallback={<WidgetSkeleton />}>
           <CountdownSection />
         </Suspense>
@@ -203,14 +216,15 @@ export default async function DashboardPage() {
             partnerName={partner?.name.split(" ")[0]}
           />
         </Suspense>
+        {/* Habits masuk kolom ke-3 di desktop, full width di mobile */}
+        <div className="col-span-2 md:col-span-1">
+          <Suspense fallback={<WidgetSkeleton className="h-28" />}>
+            <HabitSection userId={session.userId} />
+          </Suspense>
+        </div>
       </div>
 
-      {/* Row 2 — Habits */}
-      <Suspense fallback={<WidgetSkeleton className="h-28" />}>
-        <HabitSection userId={session.userId} />
-      </Suspense>
-
-      {/* Row 3 — Bucket list + Vault */}
+      {/* Row 2 — Bucket list + Vault (desktop: tetap 2 col tapi lebih lebar) */}
       <div className="grid grid-cols-2 gap-3">
         <Suspense fallback={<WidgetSkeleton />}>
           <BucketSection />
