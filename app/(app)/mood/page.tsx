@@ -12,9 +12,13 @@ const MOOD_EMOJI: Record<number, string> = {
 async function PartnerMoodSection({ partnerName }: { partnerName: string }) {
   const { partner: partnerMood } = await getTodayMoods();
   return (
-    <div className={`rounded-2xl p-4 border ${
-      partnerMood ? "bg-white border-stone-100" : "bg-stone-50 border-stone-100"
-    }`}>
+    <div
+      className={`rounded-2xl p-4 border ${
+        partnerMood
+          ? "bg-white border-stone-100"
+          : "bg-stone-50 border-stone-100"
+      }`}
+    >
       <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
         {partnerName.split(" ")[0]} Hari Ini
       </p>
@@ -47,9 +51,15 @@ async function MyMoodSection() {
 }
 
 async function ChartSection({
-  userId, partnerId, myName, partnerName,
+  userId,
+  partnerId,
+  myName,
+  partnerName,
 }: {
-  userId: string; partnerId?: string; myName: string; partnerName?: string;
+  userId: string;
+  partnerId?: string;
+  myName: string;
+  partnerName?: string;
 }) {
   const history = await getLast7DaysMoods();
   if (history.length === 0) return null;
@@ -100,21 +110,25 @@ export default async function MoodPage() {
   const partner = coupleInfo?.members.find((m) => m.id !== session.userId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-stone-800">Mood Check-in</h1>
-        <p className="text-sm text-stone-400 mt-1">Bagikan perasaanmu hari ini</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-stone-800">
+          Mood Check-in
+        </h1>
+        <p className="text-sm text-stone-400 mt-1">
+          Bagikan perasaanmu hari ini
+        </p>
       </div>
 
       {/*
-        Desktop: kiri = picker + partner, kanan = chart
-        Mobile:  stack vertikal seperti sebelumnya
+        Mobile  : stack vertikal — picker dulu, lalu chart di bawah
+        Desktop : 2 kolom — kiri picker+partner, kanan chart (sticky)
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:items-start">
 
-        {/* Kolom kiri — picker + partner */}
-        <div className="space-y-4">
+        {/* Kolom kiri — partner + picker */}
+        <div className="space-y-4 order-1">
           {partner && (
             <Suspense fallback={<CardSkeleton />}>
               <PartnerMoodSection partnerName={partner.name} />
@@ -125,15 +139,19 @@ export default async function MoodPage() {
           </Suspense>
         </div>
 
-        {/* Kolom kanan — chart */}
-        <Suspense fallback={<ChartSkeleton />}>
-          <ChartSection
-            userId={session.userId}
-            partnerId={partner?.id}
-            myName={session.name}
-            partnerName={partner?.name}
-          />
-        </Suspense>
+        {/* Kolom kanan — chart
+            - Mobile  : muncul setelah kolom kiri (order-2)
+            - Desktop : sticky supaya tetap terlihat saat scroll */}
+        <div className="order-2 md:sticky md:top-6">
+          <Suspense fallback={<ChartSkeleton />}>
+            <ChartSection
+              userId={session.userId}
+              partnerId={partner?.id}
+              myName={session.name}
+              partnerName={partner?.name}
+            />
+          </Suspense>
+        </div>
 
       </div>
     </div>
