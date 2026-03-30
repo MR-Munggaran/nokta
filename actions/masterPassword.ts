@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/db";
-import { couples } from "@/db/schema";
+import { couples, vaultItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { deriveKey, generateSalt } from "@/lib/keyDerivation";
+import { encrypt, decrypt } from "@/lib/crypto";
 import { setEncryptionKey, clearEncryptionSession, lockSession } from "@/lib/session";
 import { getSession } from "./auth";
 import { revalidatePath } from "next/cache";
@@ -15,21 +16,18 @@ import { redirect } from "next/navigation";
 
 const attemptStore = new Map<string, { count: number; resetAt: number }>();
 
-const MAX_ATTEMPTS   = 5;
-const LOCKOUT_MS     = 15 * 60 * 1000; // 15 menit
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 15 * 60 * 1000; // 15 menit
 
 function checkRateLimit(userId: string): { allowed: boolean; remaining: number } {
   const now    = Date.now();
   const record = attemptStore.get(userId);
 
   if (record && now < record.resetAt) {
-    if (record.count >= MAX_ATTEMPTS) {
-      return { allowed: false, remaining: 0 };
-    }
+    if (record.count >= MAX_ATTEMPTS) return { allowed: false, remaining: 0 };
     return { allowed: true, remaining: MAX_ATTEMPTS - record.count };
   }
 
-  // Reset or first attempt
   return { allowed: true, remaining: MAX_ATTEMPTS };
 }
 
@@ -46,6 +44,47 @@ function recordFailedAttempt(userId: string) {
 
 function clearAttempts(userId: string) {
   attemptStore.delete(userId);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch the couple's master password salt.
+ * Returns null if couple is not found.
+ */
+async function getCouplesSalt(coupleId: string): Promise<string | null> {
+  const couple = await db.query.couples.findFirst({
+    where:   eq(couples.id, coupleId),
+    columns: { masterPasswordSalt: true },
+  });
+  return couple?.masterPasswordSalt ?? null;
+}
+
+/**
+ * Verify a master password by attempting to decrypt an existing vault item.
+ * If the vault is empty, verification is skipped (no data to validate against).
+ * Returns the derived key if valid, throws if password is wrong.
+ */
+async function verifyMasterPassword(
+  masterPassword: string,
+  salt: string,
+  coupleId: string,
+): Promise<Buffer> {
+  const key = deriveKey(masterPassword, salt);
+
+  const testItem = await db.query.vaultItems.findFirst({
+    where: eq(vaultItems.coupleId, coupleId),
+  });
+
+  if (testItem) {
+    // Will throw if authTag doesn't match — i.e. wrong key
+    decrypt(
+      { ciphertext: testItem.encryptedData, iv: testItem.iv, authTag: testItem.authTag },
+      key,
+    );
+  }
+
+  return key;
 }
 
 // ─── SETUP MASTER PASSWORD ────────────────────────────────────────────────────
@@ -74,12 +113,11 @@ export async function setupMasterPassword(masterPassword: string) {
 // ─── UNLOCK ───────────────────────────────────────────────────────────────────
 
 export async function unlockWithMasterPassword(
-  masterPassword: string
+  masterPassword: string,
 ): Promise<{ success: boolean; error?: string }> {
   const session = await getSession();
   if (!session.ok) return { success: false, error: "Unauthorized" };
 
-  // Check rate limit
   const { allowed, remaining } = checkRateLimit(session.userId);
   if (!allowed) {
     return {
@@ -88,15 +126,11 @@ export async function unlockWithMasterPassword(
     };
   }
 
-  const couple = await db.query.couples.findFirst({
-    where:   eq(couples.id, session.coupleId),
-    columns: { masterPasswordSalt: true },
-  });
-
-  if (!couple) return { success: false, error: "Couple tidak ditemukan." };
+  const salt = await getCouplesSalt(session.coupleId);
+  if (!salt) return { success: false, error: "Couple tidak ditemukan." };
 
   try {
-    const key = deriveKey(masterPassword, couple.masterPasswordSalt);
+    const key = await verifyMasterPassword(masterPassword, salt, session.coupleId);
     await setEncryptionKey(key);
     clearAttempts(session.userId);
     return { success: true };
@@ -131,34 +165,92 @@ export async function changeMasterPassword(
     return { success: false, error: "Master password baru minimal 8 karakter." };
   }
 
-  const couple = await db.query.couples.findFirst({
-    where:   eq(couples.id, session.coupleId),
-    columns: { masterPasswordSalt: true },
-  });
+  const salt = await getCouplesSalt(session.coupleId);
+  if (!salt) return { success: false, error: "Couple tidak ditemukan." };
 
-  if (!couple) return { success: false, error: "Couple tidak ditemukan." };
-
-  // Verify current password
+  // 1. Verify current password dan derive old key
+  let oldKey: Buffer;
   try {
-    deriveKey(currentPassword, couple.masterPasswordSalt);
+    oldKey = await verifyMasterPassword(currentPassword, salt, session.coupleId);
   } catch {
     return { success: false, error: "Master password lama salah." };
   }
 
-  // Generate new salt + key
+  // 2. Fetch semua vault items
+  const items = await db.query.vaultItems.findMany({
+    where: eq(vaultItems.coupleId, session.coupleId),
+  });
+
+  // 3. Decrypt semua dengan key lama
+  let decryptedItems: { id: number; data: unknown }[];
+  try {
+    decryptedItems = items.map((item) => ({
+      id:   item.id,
+      data: decrypt(
+        { ciphertext: item.encryptedData, iv: item.iv, authTag: item.authTag },
+        oldKey,
+      ),
+    }));
+  } catch {
+    return {
+      success: false,
+      error:   "Gagal mendekripsi data lama. Pastikan master password lama benar.",
+    };
+  }
+
+  // 4. Generate salt + key baru
   const newSalt = generateSalt();
   const newKey  = deriveKey(newPassword, newSalt);
 
-  await db.update(couples)
-    .set({ masterPasswordSalt: newSalt })
-    .where(eq(couples.id, session.coupleId));
+  // 5. Re-encrypt semua dengan key baru
+  const reEncrypted = decryptedItems.map(({ id, data }) => {
+    const { ciphertext, iv, authTag } = encrypt(data, newKey);
+    return { id, ciphertext, iv, authTag };
+  });
 
+  // 6. Atomically update DB
+  await db.transaction(async (tx) => {
+    await tx.update(couples)
+      .set({ masterPasswordSalt: newSalt })
+      .where(eq(couples.id, session.coupleId));
+
+    for (const item of reEncrypted) {
+      await tx.update(vaultItems)
+        .set({
+          encryptedData: item.ciphertext,
+          iv:            item.iv,
+          authTag:       item.authTag,
+          updatedAt:     new Date(),
+        })
+        .where(eq(vaultItems.id, item.id));
+    }
+  });
+
+  // 7. Update session dengan key baru
   await setEncryptionKey(newKey);
 
-  // Note: existing vault items were encrypted with old key.
-  // Re-encryption of all items should happen here in production.
-  // For now, old items will fail to decrypt until re-encrypted.
+  return { success: true };
+}
 
+// ─── RESET MASTER PASSWORD ────────────────────────────────────────────────────
+// Menghapus semua vault items dan mereset salt.
+// Digunakan saat user lupa master password.
+// Data vault TIDAK bisa dipulihkan setelah reset.
+
+export async function resetMasterPassword(): Promise<{ success: boolean; error?: string }> {
+  const session = await getSession();
+  if (!session.ok) return { success: false, error: "Unauthorized" };
+
+  await db.transaction(async (tx) => {
+    await tx.delete(vaultItems)
+      .where(eq(vaultItems.coupleId, session.coupleId));
+
+    await tx.update(couples)
+      .set({ masterPasswordSalt: "pending" })
+      .where(eq(couples.id, session.coupleId));
+  });
+
+  await clearEncryptionSession();
   return { success: true };
 }
 

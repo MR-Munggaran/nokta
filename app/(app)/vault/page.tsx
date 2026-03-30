@@ -6,6 +6,8 @@ import { Lock } from "lucide-react";
 export default async function VaultPage() {
   const result = await getVaultItems();
 
+  console.log(result)
+
   if (!result.success && result.error.includes("terkunci")) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
