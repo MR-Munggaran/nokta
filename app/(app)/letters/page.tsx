@@ -33,7 +33,7 @@ export default async function LettersPage() {
             <BookHeart className="w-9 h-9 text-pink-400" />
           </div>
           <h2 className="font-semibold text-lg text-stone-700 mb-1">Belum ada surat</h2>
-          <p className="text-sm text-stone-400 max-w-[220px] leading-relaxed">
+          <p className="text-sm text-stone-400 max-w-55 leading-relaxed">
             Tulis pesan atau ungkapan hati untuk pasanganmu
           </p>
         </div>

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Trash2, Pencil, X, Check, BookHeart, ChevronDown, ChevronUp } from "lucide-react";
 import type { LetterWithAuthor } from "@/actions/letters";
 
+
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleDateString("id-ID", {
     day:   "numeric",
@@ -51,6 +52,8 @@ export function LetterCard({
     router.refresh();
   }
 
+
+
   return (
     <div className={`bg-white rounded-2xl border overflow-hidden ${
       isOwn ? "border-stone-100" : "border-pink-100"
@@ -67,8 +70,10 @@ export function LetterCard({
 
       {/* Header — div bukan button supaya bisa ada button di dalamnya */}
       <div
-        className="flex items-start gap-3 p-4 cursor-pointer hover:bg-stone-50 transition-colors select-none"
-        onClick={() => { if (!editing) setExpanded((v) => !v); }}
+        className="flex items-start gap-3 p-4 cursor-pointer ..."
+        onClick={() => {
+          if (!editing) router.push(`/letters/${letter.id}`);
+        }}
       >
         <div className="flex-1 min-w-0">
           {editing ? (
