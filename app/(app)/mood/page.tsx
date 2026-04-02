@@ -6,7 +6,14 @@ import { MoodPicker } from "@/components/mood/MoodPicker";
 import { MoodChart } from "@/components/mood/MoodChart";
 
 const MOOD_EMOJI: Record<number, string> = {
-  1: "😔", 2: "😕", 3: "😐", 4: "😊", 5: "🤩",
+  1: "😭", // sedih banget
+  2: "😔",
+  3: "😕",
+  4: "😐",
+  5: "😊",
+  6: "🥰", // sayang-sayang
+  7: "🤣", // ngakak
+  8: "🤩",
 };
 
 async function PartnerMoodSection({ partnerName }: { partnerName: string }) {

@@ -7,11 +7,14 @@ import { toast } from "sonner";
 import type { MoodCheckin } from "@/actions/mood";
 
 const MOOD_OPTIONS = [
-  { score: 1, emoji: "😔", label: "Sedih" },
-  { score: 2, emoji: "😕", label: "Kurang" },
-  { score: 3, emoji: "😐", label: "Biasa" },
-  { score: 4, emoji: "😊", label: "Baik" },
-  { score: 5, emoji: "🤩", label: "Luar Biasa" },
+  { score: 1, emoji: "😭", label: "Sedih Banget" },
+  { score: 2, emoji: "😔", label: "Sedih" },
+  { score: 3, emoji: "😕", label: "Kurang" },
+  { score: 4, emoji: "😐", label: "Biasa" },
+  { score: 5, emoji: "😊", label: "Baik" },
+  { score: 6, emoji: "🥰", label: "Sayang 💕" },
+  { score: 7, emoji: "🤣", label: "Ngakak" },
+  { score: 8, emoji: "🤩", label: "Luar Biasa" },
 ];
 
 export function MoodPicker({ existing }: { existing: MoodCheckin | null }) {

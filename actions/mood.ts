@@ -15,7 +15,7 @@ type ActionResult<T> =
   | { success: false; error: string };
 
 const createSchema = z.object({
-  moodScore: z.number().min(1).max(5),
+  moodScore: z.number().min(1).max(8),
   emoji:     z.string().min(1),
   note:      z.string().optional(),
 });
