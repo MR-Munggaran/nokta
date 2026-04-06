@@ -133,6 +133,7 @@ export const coupleNotes = pgTable("couple_notes", {
   authorId:  uuid("author_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title:     text("title").notNull(),
   content:   text("content").notNull(),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
