@@ -54,6 +54,7 @@ export const bucketListItems = pgTable("bucket_list_items", {
   coupleId:    uuid("couple_id").notNull().references(() => couples.id, { onDelete: "cascade" }),
   createdBy:   uuid("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
   title:       text("title").notNull(),
+  image: text("image"), // nullable by default
   description: text("description"),
   category:    text("category").notNull().default("general"),
   completed:   boolean("completed").notNull().default(false),

@@ -91,7 +91,7 @@ export async function createLetter(input: FormData): Promise<ActionResult<Letter
     authorId: session.userId,
     title,
     content,
-    imageUrl, // 🔥 simpan
+    imageUrl,
   }).returning();
 
   // 🔥 Tambahin ini

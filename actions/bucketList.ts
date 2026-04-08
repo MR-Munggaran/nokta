@@ -18,6 +18,7 @@ const createSchema = z.object({
   title:       z.string().min(1, "Judul wajib diisi"),
   description: z.string().optional(),
   category:    z.string().default("general"),
+  image:       z.string().optional(), // ✅ tambah ini
 });
 
 // ─── GET ALL ──────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ export async function createBucketItem(input: unknown): Promise<ActionResult<Buc
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Validasi gagal." };
 
-  const { title, description, category } = parsed.data;
+  const { title, description, category, image } = parsed.data;
 
   const [item] = await db.insert(bucketListItems).values({
     coupleId:    session.coupleId,
@@ -49,10 +50,50 @@ export async function createBucketItem(input: unknown): Promise<ActionResult<Buc
     title,
     description: description ?? null,
     category,
+    image:       image ?? null,
   }).returning();
 
   revalidatePath("/bucket-list");
+
   return { success: true, data: item };
+}
+
+export async function updateBucketItem(
+  id: number,
+  payload: Partial<Pick<BucketItem, "image" | "title" | "description" | "category">>
+): Promise<ActionResult<BucketItem>> {
+  const session = await getSession();
+  if (!session.ok) return { success: false, error: "Unauthorized" };
+
+  const existing = await db.query.bucketListItems.findFirst({
+    where: and(
+      eq(bucketListItems.id, id),
+      eq(bucketListItems.coupleId, session.coupleId),
+    ),
+  });
+
+  if (!existing) {
+    return { success: false, error: "Item tidak ditemukan." };
+  }
+
+  // 🧠 handle image replacement
+  if ("image" in payload && existing.image && payload.image && existing.image !== payload.image) {
+    try {
+      const { deleteFromCloudinary } = await import("@/lib/uploadToCloudinary");
+      await deleteFromCloudinary(existing.image);
+    } catch (err) {
+      console.warn("Gagal hapus image lama:", err);
+    }
+  }
+
+  const [updated] = await db.update(bucketListItems)
+    .set(payload)
+    .where(eq(bucketListItems.id, id))
+    .returning();
+
+  revalidatePath("/bucket-list");
+
+  return { success: true, data: updated };
 }
 
 // ─── TOGGLE COMPLETE ──────────────────────────────────────────────────────────
@@ -98,8 +139,18 @@ export async function deleteBucketItem(id: number): Promise<ActionResult<{ id: n
 
   if (!existing) return { success: false, error: "Item tidak ditemukan." };
 
+  if (existing.image) {
+    try {
+      const { deleteFromCloudinary } = await import("@/lib/uploadToCloudinary");
+      await deleteFromCloudinary(existing.image);
+    } catch (err) {
+      console.warn("Gagal hapus image:", err);
+    }
+  }
+
   await db.delete(bucketListItems).where(eq(bucketListItems.id, id));
 
   revalidatePath("/bucket-list");
+
   return { success: true, data: { id } };
 }

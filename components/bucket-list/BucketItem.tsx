@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toggleBucketItem, deleteBucketItem } from "@/actions/bucketList";
 import { toast } from "sonner";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Pencil, Trash2 } from "lucide-react";
 import type { BucketItem } from "@/actions/bucketList";
+import { handleImageUpload } from "@/lib/upload-client";
+import { updateBucketItem } from "@/actions/bucketList";
 
 const CATEGORY_EMOJI: Record<string, string> = {
   travel:   "✈️",
@@ -46,6 +48,7 @@ export function BucketItemCard({
   }
 
   const emoji = CATEGORY_EMOJI[item.category] ?? "⭐";
+  const [editOpen, setEditOpen] = useState(false);
 
   return (
     <div className={`bg-white rounded-2xl border p-4 flex items-start gap-3 transition-all ${
@@ -87,13 +90,24 @@ export function BucketItemCard({
       </div>
 
       {/* Delete */}
-      <button
-        onClick={handleDelete}
-        disabled={busy}
-        className="text-stone-300 hover:text-red-400 transition-colors disabled:opacity-50 flex-shrink-0 mt-0.5"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
+      <div className="flex flex-col gap-2">
+        {/* Edit */}
+        <button
+          onClick={() => setEditOpen(true)}
+          className="text-stone-300 hover:text-amber-500 transition-colors"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+
+        {/* Delete */}
+        <button
+          onClick={handleDelete}
+          disabled={busy}
+          className="text-stone-300 hover:text-red-400 transition-colors disabled:opacity-50"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

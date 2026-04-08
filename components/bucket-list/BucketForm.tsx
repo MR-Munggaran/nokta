@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBucketItem } from "@/actions/bucketList";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
+import { handleImageUpload } from "@/lib/upload-client";
 
 const CATEGORIES = [
   { key: "travel",    label: "Travel",      emoji: "✈️" },
@@ -30,14 +31,21 @@ export function BucketForm({ desktopTrigger = false }: Props) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
     const fd = new FormData(e.currentTarget);
+
     try {
+      const imageUrl = await handleImageUpload(fd.get("image") as File);
+
       const result = await createBucketItem({
-        title:       fd.get("title") as string,
-        description: (fd.get("description") as string) || undefined,
+        title: fd.get("title"),
+        description: fd.get("description"),
         category,
+        image: imageUrl,
       });
+
       if (!result.success) throw new Error(result.error);
+
       toast.success("Ditambahkan ke bucket list! 🎉");
       handleClose();
       router.refresh();
