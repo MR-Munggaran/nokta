@@ -6,7 +6,7 @@ import { toggleBucketItem, deleteBucketItem, updateBucketItem } from "@/actions/
 import { toast } from "sonner";
 import { Check, Pencil, Trash2, X } from "lucide-react";
 import type { BucketItem } from "@/actions/bucketList";
-// import { handleImageUpload } from "@/lib/upload-client"; // Bisa di-uncomment jika nanti fitur edit gambar ditambahkan
+import { handleImageUpload } from "@/lib/upload-client"; // ✅ Sudah di-uncomment
 
 const CATEGORY_EMOJI: Record<string, string> = {
   travel:   "✈️",
@@ -62,20 +62,39 @@ export function BucketItemCard({
     setBusy(true);
     
     const fd = new FormData(e.currentTarget);
-    const payload = {
-      title: fd.get("title") as string,
-      description: fd.get("description") as string,
-      category: editCategory,
-    };
+    const imageFile = fd.get("image") as File | null;
+    
+    let imageUrl = undefined;
+    
+    try {
+      // ✅ Cek apakah ada file baru yang diupload
+      if (imageFile && imageFile.size > 0) {
+        imageUrl = await handleImageUpload(imageFile);
+      }
 
-    const result = await updateBucketItem(item.id, payload);
-    setBusy(false);
+      const payload: Partial<Pick<BucketItem, "image" | "title" | "description" | "category">> = {
+        title: fd.get("title") as string,
+        description: fd.get("description") as string,
+        category: editCategory,
+      };
 
-    if (!result.success) return toast.error(result.error);
+      // Hanya masukkan image ke payload jika ada gambar baru
+      if (imageUrl) {
+        payload.image = imageUrl;
+      }
 
-    toast.success("Item berhasil diperbarui! ✨");
-    setEditOpen(false);
-    router.refresh();
+      const result = await updateBucketItem(item.id, payload);
+      
+      if (!result.success) throw new Error(result.error);
+
+      toast.success("Item berhasil diperbarui! ✨");
+      setEditOpen(false);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan perubahan");
+    } finally {
+      setBusy(false);
+    }
   }
 
   const emoji = CATEGORY_EMOJI[item.category] ?? "⭐";
@@ -149,7 +168,7 @@ export function BucketItemCard({
       {/* Edit Modal */}
       {editOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center pb-[88px] sm:items-center sm:p-4">
-          <div className="absolute inset-0 -z-10" onClick={() => setEditOpen(false)} />
+          <div className="absolute inset-0 -z-10" onClick={handleCloseEdit} />
           <div className="w-[calc(100%-2rem)] max-w-md bg-white rounded-t-3xl sm:rounded-3xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
               <h2 className="font-bold text-stone-800">Edit Bucket List</h2>
@@ -181,6 +200,24 @@ export function BucketItemCard({
                   rows={2}
                   defaultValue={item.description || ""}
                   className="w-full bg-stone-50 rounded-xl px-4 py-3 text-sm text-stone-700 border border-stone-100 outline-none focus:ring-2 focus:ring-stone-200 placeholder-stone-300 resize-none"
+                />
+              </div>
+
+              {/* 👇 INPUT GAMBAR DITAMBAHKAN DI SINI 👇 */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
+                  Ubah Gambar (opsional)
+                </label>
+                {item.image && (
+                  <p className="text-[10px] text-amber-500 mb-1">
+                    *Gambar sudah ada. Biarkan kosong jika tidak ingin mengubahnya.
+                  </p>
+                )}
+                <input
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  className="w-full bg-stone-50 rounded-xl px-4 py-2.5 text-sm text-stone-700 border border-stone-100 outline-none focus:ring-2 focus:ring-stone-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 transition-colors cursor-pointer"
                 />
               </div>
 
