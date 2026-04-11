@@ -132,35 +132,35 @@ export default async function MoodPage() {
         Mobile  : stack vertikal — picker dulu, lalu chart di bawah
         Desktop : 2 kolom — kiri picker+partner, kanan chart (sticky)
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:items-start">
-
-        {/* Kolom kiri — partner + picker */}
-        <div className="space-y-4 order-1">
-          {partner && (
-            <Suspense fallback={<CardSkeleton />}>
-              <PartnerMoodSection partnerName={partner.name} />
-            </Suspense>
-          )}
-          <Suspense fallback={<CardSkeleton />}>
-            <MyMoodSection />
-          </Suspense>
-        </div>
-
-        {/* Kolom kanan — chart
-            - Mobile  : muncul setelah kolom kiri (order-2)
-            - Desktop : sticky supaya tetap terlihat saat scroll */}
-        <div className="order-2 md:sticky md:top-6">
-          <Suspense fallback={<ChartSkeleton />}>
-            <ChartSection
-              userId={session.userId}
-              partnerId={partner?.id}
-              myName={session.name}
-              partnerName={partner?.name}
-            />
-          </Suspense>
-        </div>
-
-      </div>
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:items-start">
+ 
+         {/* Kolom kiri — partner + picker */}
+         <div className="space-y-4 order-1 lg:col-span-5">
+           {partner && (
+             <Suspense fallback={<CardSkeleton />}>
+               <PartnerMoodSection partnerName={partner.name} />
+             </Suspense>
+           )}
+           <Suspense fallback={<CardSkeleton />}>
+             <MyMoodSection />
+           </Suspense>
+         </div>
+ 
+         {/* Kolom kanan — chart
+             - Mobile  : muncul setelah kolom kiri (order-2)
+             - Desktop : sticky supaya tetap terlihat saat scroll */}
+         <div className="order-2 lg:col-span-7 md:sticky md:top-6">
+           <Suspense fallback={<ChartSkeleton />}>
+             <ChartSection
+               userId={session.userId}
+               partnerId={partner?.id}
+               myName={session.name}
+               partnerName={partner?.name}
+             />
+           </Suspense>
+         </div>
+ 
+       </div>
     </div>
   );
 }

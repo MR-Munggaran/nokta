@@ -63,15 +63,15 @@ export default async function BucketListPage() {
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
                 Belum selesai — {pending.length}
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {pending.map((item) => (
-                  <BucketItemCard
-                    key={item.id}
-                    item={item}
-                    completedByName={item.completedBy ? memberMap[item.completedBy] : undefined}
-                  />
-                ))}
-              </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                 {pending.map((item) => (
+                   <BucketItemCard
+                     key={item.id}
+                     item={item}
+                     completedByName={item.completedBy ? memberMap[item.completedBy] : undefined}
+                   />
+                 ))}
+               </div>
             </div>
           )}
 
@@ -80,15 +80,15 @@ export default async function BucketListPage() {
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
                 Selesai — {completed.length} 🎉
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {completed.map((item) => (
-                  <BucketItemCard
-                    key={item.id}
-                    item={item}
-                    completedByName={item.completedBy ? memberMap[item.completedBy] : undefined}
-                  />
-                ))}
-              </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                 {completed.map((item) => (
+                   <BucketItemCard
+                     key={item.id}
+                     item={item}
+                     completedByName={item.completedBy ? memberMap[item.completedBy] : undefined}
+                   />
+                 ))}
+               </div>
             </div>
           )}
         </div>
