@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toggleBucketItem, deleteBucketItem, updateBucketItem } from "@/actions/bucketList";
 import { toast } from "sonner";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Check, Pencil, Trash2, X, ChevronRight } from "lucide-react";
 import type { BucketItem } from "@/actions/bucketList";
-import { handleImageUpload } from "@/lib/upload-client"; // ✅ Sudah di-uncomment
+import { handleImageUpload } from "@/lib/upload-client";
 
 const CATEGORY_EMOJI: Record<string, string> = {
   travel:   "✈️",
@@ -106,8 +107,8 @@ export function BucketItemCard({
 
   return (
     <>
-      <div className={`bg-white rounded-2xl border p-4 flex items-start gap-3 transition-all ${
-        item.completed ? "border-emerald-100 opacity-75" : "border-stone-100"
+      <div className={`bg-white rounded-2xl border p-4 flex items-start gap-3 transition-all group ${
+        item.completed ? "border-emerald-100 opacity-75" : "border-stone-100 hover:border-amber-200"
       }`}>
         {/* Checkbox */}
         <button
@@ -122,8 +123,8 @@ export function BucketItemCard({
           {item.completed && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
         </button>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
+        {/* Content - Clickable */}
+        <Link href={`/bucket-list/${item.id}`} className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-base">{emoji}</span>
             <p className={`font-semibold text-sm ${
@@ -142,7 +143,7 @@ export function BucketItemCard({
               ✓ Diselesaikan oleh {completedByName}
             </p>
           )}
-        </div>
+        </Link>
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2">

@@ -21,6 +21,20 @@ const createSchema = z.object({
   image:       z.string().optional(), // ✅ tambah ini
 });
 
+// ─── GET BY ID ───────────────────────────────────────────────────────────────
+
+export async function getBucketItemById(id: number): Promise<BucketItem | null> {
+  const session = await getSession();
+  if (!session.ok) return null;
+
+  return db.query.bucketListItems.findFirst({
+    where: and(
+      eq(bucketListItems.id, id),
+      eq(bucketListItems.coupleId, session.coupleId),
+    ),
+  });
+}
+
 // ─── GET ALL ──────────────────────────────────────────────────────────────────
 
 export async function getBucketList(): Promise<BucketItem[]> {
@@ -54,6 +68,7 @@ export async function createBucketItem(input: unknown): Promise<ActionResult<Buc
   }).returning();
 
   revalidatePath("/bucket-list");
+  revalidatePath(`/bucket-list/${item.id}`);
 
   return { success: true, data: item };
 }
@@ -92,6 +107,7 @@ export async function updateBucketItem(
     .returning();
 
   revalidatePath("/bucket-list");
+  revalidatePath(`/bucket-list/${id}`);
 
   return { success: true, data: updated };
 }
@@ -121,6 +137,7 @@ export async function toggleBucketItem(id: number): Promise<ActionResult<BucketI
     .returning();
 
   revalidatePath("/bucket-list");
+  revalidatePath(`/bucket-list/${id}`);
   return { success: true, data: updated };
 }
 
