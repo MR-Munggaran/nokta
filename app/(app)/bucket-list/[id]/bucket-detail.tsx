@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { toggleBucketItem, deleteBucketItem } from "@/actions/bucketList";
+import { toggleBucketItem, deleteBucketItem, getBucketItemById } from "@/actions/bucketList";
 import { getSession } from "@/actions/auth";
 import { getCoupleInfo } from "@/actions/couple";
 import { toast } from "sonner";
@@ -45,25 +45,26 @@ export default function BucketDetail({ id }: { id: number }) {
   const [coupleInfo, setCoupleInfo] = useState<Awaited<ReturnType<typeof getCoupleInfo>>>(null);
   const [loading, setLoading] = useState(true);
 
-  useState(() => {
-    async function load() {
-      const [sessionResult, itemResult, coupleResult] = await Promise.all([
-        getSession(),
-        import("@/actions/bucketList").then(m => m.getBucketItemById(id)),
-        getCoupleInfo(),
-      ]);
-      
-      if (!sessionResult.ok || !itemResult) {
-        router.replace("/bucket-list");
-        return;
+  useEffect(() => {
+      async function load() {
+        const [sessionResult, itemResult, coupleResult] = await Promise.all([
+          getSession(),
+          getBucketItemById(id), // ✅ Panggil langsung fungsi Server Action-nya
+          getCoupleInfo(),
+        ]);
+        
+        if (!sessionResult.ok || !itemResult) {
+          router.replace("/bucket-list");
+          return;
+        }
+        
+        setItem(itemResult);
+        setCoupleInfo(coupleResult);
+        setLoading(false);
       }
       
-      setItem(itemResult);
-      setCoupleInfo(coupleResult);
-      setLoading(false);
-    }
-    load();
-  });
+      load();
+    }, [id, router]);
 
   if (loading || !item) {
     return <div className="text-sm text-stone-400">Memuat...</div>;
@@ -78,6 +79,8 @@ export default function BucketDetail({ id }: { id: number }) {
     : null;
 
   async function handleToggle() {
+    if (!item) return; // ✅ Tambahkan ini agar TypeScript tenang
+
     setBusy(true);
     const result = await toggleBucketItem(id);
     setBusy(false);
@@ -87,6 +90,8 @@ export default function BucketDetail({ id }: { id: number }) {
   }
 
   async function handleDelete() {
+    if (!item) return; // ✅ Tambahkan ini juga
+    
     if (!confirm(`Hapus "${item.title}"?`)) return;
     setBusy(true);
     const result = await deleteBucketItem(id);

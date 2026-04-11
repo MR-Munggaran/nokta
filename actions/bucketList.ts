@@ -27,12 +27,16 @@ export async function getBucketItemById(id: number): Promise<BucketItem | null> 
   const session = await getSession();
   if (!session.ok) return null;
 
-  return db.query.bucketListItems.findFirst({
+  // Tangkap dulu datanya ke dalam variabel
+  const item = await db.query.bucketListItems.findFirst({
     where: and(
       eq(bucketListItems.id, id),
       eq(bucketListItems.coupleId, session.coupleId),
     ),
   });
+
+  // Gunakan nullish coalescing (??) agar jika undefined, berubah jadi null
+  return item ?? null; 
 }
 
 // ─── GET ALL ──────────────────────────────────────────────────────────────────
