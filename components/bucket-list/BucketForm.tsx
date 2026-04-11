@@ -154,6 +154,20 @@ function BucketFormModal({
             />
           </div>
 
+          {/* 👇 INPUT GAMBAR DITAMBAHKAN DI SINI 👇 */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
+              Gambar (opsional)
+            </label>
+            <input
+              name="image"
+              type="file"
+              accept="image/*"
+              className="w-full bg-stone-50 rounded-xl px-4 py-2.5 text-sm text-stone-700 border border-stone-100 outline-none focus:ring-2 focus:ring-stone-200 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 transition-colors cursor-pointer"
+            />
+          </div>
+          {/* 👆 ================================= 👆 */}
+
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest">
               Kategori
