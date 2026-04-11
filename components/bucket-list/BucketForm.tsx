@@ -33,15 +33,20 @@ export function BucketForm({ desktopTrigger = false }: Props) {
     setLoading(true);
 
     const fd = new FormData(e.currentTarget);
+    const imageFile = fd.get("image") as File | null;
 
     try {
-      const imageUrl = await handleImageUpload(fd.get("image") as File);
+      // Hanya panggil handleImageUpload kalau file gambar benar-benar ada dan ukurannya > 0
+      let imageUrl = undefined;
+      if (imageFile && imageFile.size > 0) {
+        imageUrl = await handleImageUpload(imageFile);
+      }
 
       const result = await createBucketItem({
         title: fd.get("title"),
         description: fd.get("description"),
         category,
-        image: imageUrl,
+        image: imageUrl, // Bisa undefined, sesuai skema Zod yang .optional()
       });
 
       if (!result.success) throw new Error(result.error);
