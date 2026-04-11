@@ -146,7 +146,15 @@ export function BucketItemCard({
         </Link>
 
         {/* Action Buttons */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
+          {/* View Detail */}
+          <Link
+            href={`/bucket-list/${item.id}`}
+            className="w-6 h-6 rounded flex items-center justify-center text-stone-300 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+
           {/* Edit */}
           <button
             onClick={() => setEditOpen(true)}
