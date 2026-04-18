@@ -82,12 +82,8 @@ export async function createBucketItem(input: unknown): Promise<ActionResult<Buc
   }).returning();
  
   revalidatePath("/bucket-list");
-<<<<<<< HEAD
   revalidatePath(`/bucket-list/${item.id}`);
 
-=======
- 
->>>>>>> b9aa4cc (bug fix responsive mood and pagination bucket-list)
   return { success: true, data: item };
 }
 
