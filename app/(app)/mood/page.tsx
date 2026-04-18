@@ -127,7 +127,6 @@ export default async function MoodPage() {
         </p>
       </div>
 
-<<<<<<< HEAD
       {/*
         Mobile  : stack vertikal — picker dulu, lalu chart di bawah
         Desktop : 2 kolom — kiri picker+partner, kanan chart (sticky)
@@ -161,37 +160,6 @@ export default async function MoodPage() {
          </div>
  
        </div>
-=======
-      {/* Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-        {/* LEFT (dominant) */}
-        <div className="space-y-5 lg:col-span-2">
-          {partner && (
-            <Suspense fallback={<CardSkeleton />}>
-              <PartnerMoodSection partnerName={partner.name} />
-            </Suspense>
-          )}
-
-          <Suspense fallback={<CardSkeleton />}>
-            <MyMoodSection />
-          </Suspense>
-        </div>
-
-        {/* RIGHT (chart) */}
-        <div className="lg:col-span-2 lg:sticky lg:top-6">
-          <Suspense fallback={<ChartSkeleton />}>
-            <ChartSection
-              userId={session.userId}
-              partnerId={partner?.id}
-              myName={session.name}
-              partnerName={partner?.name}
-            />
-          </Suspense>
-        </div>
-
-      </div>
->>>>>>> b9aa4cc (bug fix responsive mood and pagination bucket-list)
     </div>
   );
 }
