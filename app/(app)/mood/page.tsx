@@ -1,3 +1,4 @@
+
 import { Suspense } from "react";
 import { getTodayMoods, getLast7DaysMoods } from "@/actions/mood";
 import { getCoupleInfo } from "@/actions/couple";
@@ -6,38 +7,35 @@ import { MoodPicker } from "@/components/mood/MoodPicker";
 import { MoodChart } from "@/components/mood/MoodChart";
 
 const MOOD_EMOJI: Record<number, string> = {
-  1: "😭", // sedih banget
+  1: "😭",
   2: "😔",
   3: "😕",
   4: "😐",
   5: "😊",
-  6: "🥰", // sayang-sayang
-  7: "🤣", // ngakak
+  6: "🥰",
+  7: "🤣",
   8: "🤩",
 };
 
 async function PartnerMoodSection({ partnerName }: { partnerName: string }) {
   const { partner: partnerMood } = await getTodayMoods();
   return (
-    <div
-      className={`rounded-2xl p-4 border ${
-        partnerMood
-          ? "bg-white border-stone-100"
-          : "bg-stone-50 border-stone-100"
-      }`}
-    >
-      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">
+    <div className={`rounded-2xl p-5 lg:p-6 border ${
+      partnerMood ? "bg-white border-stone-100" : "bg-stone-50 border-stone-100"
+    }`}>
+      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">
         {partnerName.split(" ")[0]} Hari Ini
       </p>
+
       {partnerMood ? (
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">{partnerMood.emoji}</span>
+        <div className="flex items-center gap-4">
+          <span className="text-4xl lg:text-5xl">{partnerMood.emoji}</span>
           <div>
-            <p className="font-semibold text-stone-800 text-sm">
-              {MOOD_EMOJI[partnerMood.moodScore]} Mood {partnerMood.moodScore}/5
+            <p className="font-semibold text-stone-800 text-sm lg:text-base">
+              {MOOD_EMOJI[partnerMood.moodScore]} Mood {partnerMood.moodScore}/8
             </p>
             {partnerMood.note && (
-              <p className="text-xs text-stone-400 mt-0.5 italic">
+              <p className="text-xs text-stone-400 mt-1 italic">
                 &ldquo;{partnerMood.note}&rdquo;
               </p>
             )}
@@ -70,6 +68,7 @@ async function ChartSection({
 }) {
   const history = await getLast7DaysMoods();
   if (history.length === 0) return null;
+
   return (
     <MoodChart
       checkins={history}
@@ -83,22 +82,22 @@ async function ChartSection({
 
 function CardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-stone-100 p-4 animate-pulse space-y-3">
+    <div className="bg-white rounded-2xl border border-stone-100 p-5 animate-pulse space-y-3">
       <div className="h-3 bg-stone-100 rounded w-1/3" />
-      <div className="h-10 bg-stone-100 rounded w-full" />
+      <div className="h-12 bg-stone-100 rounded w-full" />
     </div>
   );
 }
 
 function ChartSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-stone-100 p-4 animate-pulse space-y-3">
+    <div className="bg-white rounded-2xl border border-stone-100 p-5 animate-pulse space-y-3">
       <div className="h-3 bg-stone-100 rounded w-1/4" />
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         {Array.from({ length: 7 }).map((_, i) => (
-          <div key={i} className="flex-1 space-y-1">
-            <div className="h-8 bg-stone-100 rounded-lg" />
-            <div className="h-6 bg-stone-50 rounded-lg" />
+          <div key={i} className="flex-1 space-y-2">
+            <div className="h-10 bg-stone-100 rounded-lg" />
+            <div className="h-8 bg-stone-50 rounded-lg" />
           </div>
         ))}
       </div>
@@ -117,10 +116,10 @@ export default async function MoodPage() {
   const partner = coupleInfo?.members.find((m) => m.id !== session.userId);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6 max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-stone-800">
+        <h1 className="text-2xl lg:text-3xl font-bold text-stone-800">
           Mood Check-in
         </h1>
         <p className="text-sm text-stone-400 mt-1">
@@ -128,6 +127,7 @@ export default async function MoodPage() {
         </p>
       </div>
 
+<<<<<<< HEAD
       {/*
         Mobile  : stack vertikal — picker dulu, lalu chart di bawah
         Desktop : 2 kolom — kiri picker+partner, kanan chart (sticky)
@@ -161,6 +161,37 @@ export default async function MoodPage() {
          </div>
  
        </div>
+=======
+      {/* Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+        {/* LEFT (dominant) */}
+        <div className="space-y-5 lg:col-span-2">
+          {partner && (
+            <Suspense fallback={<CardSkeleton />}>
+              <PartnerMoodSection partnerName={partner.name} />
+            </Suspense>
+          )}
+
+          <Suspense fallback={<CardSkeleton />}>
+            <MyMoodSection />
+          </Suspense>
+        </div>
+
+        {/* RIGHT (chart) */}
+        <div className="lg:col-span-2 lg:sticky lg:top-6">
+          <Suspense fallback={<ChartSkeleton />}>
+            <ChartSection
+              userId={session.userId}
+              partnerId={partner?.id}
+              myName={session.name}
+              partnerName={partner?.name}
+            />
+          </Suspense>
+        </div>
+
+      </div>
+>>>>>>> b9aa4cc (bug fix responsive mood and pagination bucket-list)
     </div>
   );
 }

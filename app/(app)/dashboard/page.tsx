@@ -9,8 +9,9 @@ import { getDaysUntil } from "@/lib/dateUtils";
 import { Shield, ListChecks, Activity, BookHeart, ArrowRight, Flame, Camera } from "lucide-react";
 import { CountdownWidget } from "@/components/dates/CountdownWidget";
 import Link from "next/link";
+import { Skeleton, CardSkeleton } from "@/components/ui/Skeleton";
 
-// ─── WIDGET COMPONENTS ────────────────────────────────────────────────────────
+
 
 async function CountdownSection() {
   const dates = await getSpecialDates();
@@ -119,10 +120,10 @@ async function HabitSection({ userId }: { userId: string }) {
 }
 
 async function BucketSection() {
-  const items     = await getBucketList();
+  const { items } = await getBucketList();
   const total     = items.length;
   const completed = items.filter((i) => i.completed).length;
-
+ 
   return (
     <Link href="/bucket-list" className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-col gap-2 hover:bg-stone-50 transition-colors active:scale-[0.97] h-full">
       <div className="flex items-center justify-between">
@@ -146,17 +147,9 @@ async function BucketSection() {
   );
 }
 
-function WidgetSkeleton({ className = "" }: { className?: string }) {
-  return (
-    <div className={`bg-white rounded-2xl border border-stone-100 p-4 animate-pulse ${className}`}>
-      <div className="h-3 bg-stone-100 rounded w-1/2 mb-3" />
-      <div className="h-8 bg-stone-100 rounded w-3/4 mb-2" />
-      <div className="h-2 bg-stone-100 rounded w-full" />
-    </div>
-  );
-}
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
+
 
 export default async function DashboardPage() {
   const [session, coupleInfo] = await Promise.all([
@@ -206,10 +199,10 @@ export default async function DashboardPage() {
 
       {/* Row 1 — Countdown + Mood + Habits (desktop: 3 col) */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <Suspense fallback={<WidgetSkeleton />}>
+        <Suspense fallback={<CardSkeleton />}>
           <CountdownSection />
         </Suspense>
-        <Suspense fallback={<WidgetSkeleton />}>
+        <Suspense fallback={<CardSkeleton />}>
           <MoodSection
             userId={session.userId}
             partnerId={partner?.id}
@@ -218,7 +211,7 @@ export default async function DashboardPage() {
         </Suspense>
         {/* Habits masuk kolom ke-3 di desktop, full width di mobile */}
         <div className="col-span-2 md:col-span-1">
-          <Suspense fallback={<WidgetSkeleton className="h-28" />}>
+          <Suspense fallback={<CardSkeleton className="h-28" />}>
             <HabitSection userId={session.userId} />
           </Suspense>
         </div>
@@ -226,7 +219,7 @@ export default async function DashboardPage() {
 
       {/* Row 2 — Bucket list + Vault (desktop: tetap 2 col tapi lebih lebar) */}
       <div className="grid grid-cols-2 gap-3">
-        <Suspense fallback={<WidgetSkeleton />}>
+        <Suspense fallback={<CardSkeleton />}>
           <BucketSection />
         </Suspense>
         <Link href="/vault" className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-col gap-2 hover:bg-stone-50 transition-colors active:scale-[0.97]">

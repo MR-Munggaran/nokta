@@ -2,21 +2,30 @@ import { getBucketList } from "@/actions/bucketList";
 import { getCoupleInfo } from "@/actions/couple";
 import { BucketItemCard } from "@/components/bucket-list/BucketItem";
 import { BucketForm } from "@/components/bucket-list/BucketForm";
+import { Pagination } from "@/components/ui/Pagination";
 import { ListChecks } from "lucide-react";
-
-export default async function BucketListPage() {
-  const [items, coupleInfo] = await Promise.all([
-    getBucketList(),
+ 
+export default async function BucketListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page } = await searchParams;
+  const currentPage = Number(page) || 1;
+  const pageSize = 10;
+ 
+  const [{ items, totalPages }, coupleInfo] = await Promise.all([
+    getBucketList(currentPage, pageSize),
     getCoupleInfo(),
   ]);
-
+ 
   const completed = items.filter((i) => i.completed);
   const pending   = items.filter((i) => !i.completed);
-
+ 
   const memberMap = Object.fromEntries(
     coupleInfo?.members.map((m) => [m.id, m.name.split(" ")[0]]) ?? []
   );
-
+ 
   return (
     <>
       {/* Header */}
@@ -29,7 +38,7 @@ export default async function BucketListPage() {
         </div>
         <BucketForm desktopTrigger />
       </div>
-
+ 
       {/* Progress bar */}
       {items.length > 0 && (
         <div className="mb-6">
@@ -44,7 +53,7 @@ export default async function BucketListPage() {
           </p>
         </div>
       )}
-
+ 
       {/* Empty state */}
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -74,7 +83,7 @@ export default async function BucketListPage() {
                </div>
             </div>
           )}
-
+ 
           {completed.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-bold text-stone-400 uppercase tracking-widest px-1">
@@ -91,9 +100,15 @@ export default async function BucketListPage() {
                </div>
             </div>
           )}
+ 
+          <Pagination 
+            currentPage={currentPage} 
+            totalPages={totalPages} 
+            baseUrl="/bucket-list" 
+          />
         </div>
       )}
-
+ 
       <BucketForm />
     </>
   );

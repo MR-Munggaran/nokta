@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { bucketListItems } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getSession } from "./auth";
 import { z } from "zod";
@@ -40,28 +40,38 @@ export async function getBucketItemById(id: number): Promise<BucketItem | null> 
 }
 
 // ─── GET ALL ──────────────────────────────────────────────────────────────────
-
-export async function getBucketList(): Promise<BucketItem[]> {
+ 
+export async function getBucketList(page = 1, pageSize = 10): Promise<{ items: BucketItem[]; totalPages: number; totalItems: number }> {
   const session = await getSession();
-  if (!session.ok) return [];
-
-  return db.query.bucketListItems.findMany({
+  if (!session.ok) return { items: [], totalPages: 0, totalItems: 0 };
+ 
+  const offset = (page - 1) * pageSize;
+ 
+  const items = await db.query.bucketListItems.findMany({
     where:   eq(bucketListItems.coupleId, session.coupleId),
     orderBy: (t, { asc, desc }) => [asc(t.completed), desc(t.createdAt)],
+    limit:   pageSize,
+    offset:  offset,
   });
+ 
+  const [result] = await db.select({ value: count() }).from(bucketListItems).where(eq(bucketListItems.coupleId, session.coupleId));
+  const totalItems = result.value;
+  const totalPages = Math.ceil(totalItems / pageSize);
+ 
+  return { items, totalPages, totalItems };
 }
-
+ 
 // ─── CREATE ───────────────────────────────────────────────────────────────────
-
+ 
 export async function createBucketItem(input: unknown): Promise<ActionResult<BucketItem>> {
   const session = await getSession();
   if (!session.ok) return { success: false, error: "Unauthorized" };
-
+ 
   const parsed = createSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: "Validasi gagal." };
-
+ 
   const { title, description, category, image } = parsed.data;
-
+ 
   const [item] = await db.insert(bucketListItems).values({
     coupleId:    session.coupleId,
     createdBy:   session.userId,
@@ -70,12 +80,17 @@ export async function createBucketItem(input: unknown): Promise<ActionResult<Buc
     category,
     image:       image ?? null,
   }).returning();
-
+ 
   revalidatePath("/bucket-list");
+<<<<<<< HEAD
   revalidatePath(`/bucket-list/${item.id}`);
 
+=======
+ 
+>>>>>>> b9aa4cc (bug fix responsive mood and pagination bucket-list)
   return { success: true, data: item };
 }
+
 
 export async function updateBucketItem(
   id: number,
