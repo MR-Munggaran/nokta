@@ -7,8 +7,17 @@ import {
   timestamp,
   date,
   serial,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+
+export const eventCategoryEnum = pgEnum("event_category", [
+  "work",
+  "date",
+  "health",
+  "personal",
+  "other",
+]);
 
 // ─── COUPLES ──────────────────────────────────────────────────────────────────
 
@@ -198,4 +207,40 @@ export const momentsRelations = relations(moments, ({ one, many }) => ({
 
 export const momentImagesRelations = relations(momentImages, ({ one }) => ({
   moment: one(moments, { fields: [momentImages.momentId], references: [moments.id] }),
+}));
+
+
+ 
+export type EventCategory = (typeof eventCategoryEnum.enumValues)[number];
+ 
+// ─── TABLE ────────────────────────────────────────────────────────────────────
+ 
+export const scheduleEvents = pgTable("schedule_events", {
+  id:         serial("id").primaryKey(),
+  coupleId:   uuid("couple_id")
+    .notNull()
+    .references(() => couples.id, { onDelete: "cascade" }),
+  createdBy:  uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  title:      text("title").notNull(),
+  category:   eventCategoryEnum("category").notNull().default("other"),
+  eventDate:  date("event_date").notNull(),
+  startTime:  text("start_time").notNull(),
+  endTime:    text("end_time"),
+  note:       text("note"),
+  createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:  timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+ 
+// ─── TYPES ────────────────────────────────────────────────────────────────────
+ 
+export type ScheduleEvent    = typeof scheduleEvents.$inferSelect;
+export type NewScheduleEvent = typeof scheduleEvents.$inferInsert;
+ 
+// ─── RELATIONS (add to your existing relations block) ─────────────────────────
+ 
+export const scheduleEventsRelations = relations(scheduleEvents, ({ one }) => ({
+  couple: one(couples, { fields: [scheduleEvents.coupleId], references: [couples.id] }),
+  creator: one(users,  { fields: [scheduleEvents.createdBy],  references: [users.id]  }),
 }));

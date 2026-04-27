@@ -2,11 +2,12 @@ import Link from "next/link";
 import { getSession } from "@/actions/auth";
 import { logout } from "@/actions/auth";
 import { lock } from "@/actions/masterPassword";
-import { ListChecks, BookHeart, Settings, LogOut, ChevronRight, Lock, HeartIcon, DollarSignIcon } from "lucide-react";
+import { ListChecks, BookHeart, Settings, LogOut, ChevronRight, Lock, HeartIcon, DollarSignIcon, DatabaseIcon } from "lucide-react";
 
 const MORE_ITEMS = [
   { href: "/bucket-list", icon: ListChecks, label: "Bucket List",     desc: "Hal-hal yang ingin kalian lakukan" },
   { href: "/letters",     icon: BookHeart,  label: "Surat & Catatan", desc: "Pesan untuk pasanganmu" },
+  { href: "/schedule",    icon: DatabaseIcon,        label: "Schedule",         desc: "Atur jadwal penting kalian" },
   { href: "/settings",    icon: Settings,   label: "Pengaturan",      desc: "Akun dan preferensi" },
   { href: "/moments",     icon: HeartIcon,  label: "Moments",         desc: "Moment moment ketika pacaran" },
 

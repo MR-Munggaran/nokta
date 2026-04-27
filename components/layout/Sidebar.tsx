@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Home, Shield, CalendarHeart, Activity, MoreHorizontal,
   ListChecks, BookHeart, Camera, SmilePlus, Settings,
-  Lock, LogOut,
+  Lock, LogOut, DatabaseIcon,
   DollarSignIcon,
 } from "lucide-react";
 import { lock, } from "@/actions/masterPassword";
@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: "/dates",       icon: CalendarHeart, label: "Tanggal" },
   { href: "/bucket-list", icon: ListChecks,    label: "Bucket List" },
   { href: "/letters",     icon: BookHeart,     label: "Surat" },
+  { href: "/schedule",    icon: DatabaseIcon,        label: "Schedule" },
   { href: "/vault",       icon: Shield,        label: "Vault" },
   { href: "/settings",    icon: Settings,      label: "Pengaturan" },
 ] as const;
